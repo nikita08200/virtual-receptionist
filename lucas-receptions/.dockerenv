@@ -1,0 +1,6 @@
+REACT_APP_SERVER_URL=http://localhost:8000
+REACT_APP_JANUS_URL=http://localhost:8088/janus
+REACT_APP_TURN_URL=turn:localhost:3478?transport=udp
+REACT_APP_TURN_USER=user
+REACT_APP_TURN_PASS=pass
+PORT=3000

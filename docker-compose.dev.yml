@@ -1,0 +1,82 @@
+version: "3.7"
+
+services:
+  react:
+    build:
+      context: ./lucas-receptions
+      dockerfile: Dockerfile
+    ports:
+     - "3000:3000"
+    env_file: ./lucas-receptions/.dockerenv
+    depends_on:
+      - server
+      - janus_streamer
+      - coturn
+    volumes:
+      - ./lucas-receptions:/react
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: ./server/.env
+    volumes:
+      - ./server:/server
+  janus_streamer:
+    build:
+      context: .
+    ports:
+      - "8088:8088"
+      - "8089:8089"
+    env_file: ./.env
+    volumes:
+      - ./conf:/opt/janus/etc/janus
+      - ./keys:/keys
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 100000
+        hard: 100000
+  coturn:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.coturn
+    container_name: coturn
+    network_mode: host
+    # ports:
+    #   - "3478:3478/udp" # STUN/TURN UDP
+    #   - "3478:3478/tcp" # STUN/TURN TCP
+    #   - "3479:3479/udp" # STUN/TURN UDP Alt port (RFC5780 support)
+    #   - "3479:3479/tcp" # STUN/TURN TCP Alt port (RFC5780 support)
+    #   - "5349:5349/udp" # STUN/TURN DTLS
+    #   - "5349:5349/tcp" # STUN/TURN TLS
+    #   - "5350:5350/udp" # STUN/TURN DTLS Alt port (RFC5780 support)
+    #   - "5350:5350/tcp" # STUN/TURN TLS Alt port (RFC5780 support)
+    #   - "49152:65535/udp" # UDP media ports for TURN relay
+    environment:
+      PORT: 3478
+      ALT_PORT: 3479
+      TLS_PORT: 5349
+      TLS_ALT_PORT: 5350
+      MIN_PORT: 49152
+      MAX_PORT: 65535
+      TURN_USER: user # change in production
+      TURN_PASS: pass # change in production
+      JSON_CONFIG: '{"config":["no-cli", "lt-cred-mech", "no-dtls", "no-tls"]}'
+  nginx:
+    image: nginx:1.15-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - react
+    volumes:
+      - ./conf:/etc/nginx/conf.d
+      - ./conf/certbot/conf:/etc/letsencrypt
+      - ./conf/certbot/www:/var/www/certbot
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./conf/certbot/conf:/etc/letsencrypt
+      - ./conf/certbot/www:/var/www/certbot

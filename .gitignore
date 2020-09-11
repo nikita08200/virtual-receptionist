@@ -1,0 +1,10 @@
+.env
+.idea
+lucas-receptions/node_modules/
+lucas-receptions/build/
+lucas-receptions/.env
+
+server/.env
+server/auth.js
+server/node_modules/
+server/*.http
